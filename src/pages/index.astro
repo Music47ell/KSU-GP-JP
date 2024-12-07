@@ -1,16 +1,66 @@
 ---
-
+import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout>
+    <div class="flex justify-end items-center p-4">
+        <span class="mr-2">New User?</span>
+        <a
+            href="/seeker/signup"
+            class="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+            >Job Seeker</a
+        >
+        <a
+            href="/owner/signup"
+            class="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >Job Owner</a
+        >
+    </div>
+    <div class="flex-grow flex justify-center items-center">
+        <div class="max-w-md w-full">
+            <div class="text-center">
+                <img
+                    src="/businessman.png"
+                    alt="Job Portal Logo"
+                    class="w-32 mx-auto mb-8"
+                />
+                <form action="/api/auth/signin" method="post">
+                    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+                        <div class="mb-4">
+                            <label
+                                class="block text-gray-700 text-sm font-bold mb-2"
+                                for="email">Email</label
+                            >
+                            <input
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                type="email"
+                                name="email"
+                                id="email"
+                            />
+                        </div>
+                        <div class="mb-6">
+                            <label
+                                class="block text-gray-700 text-sm font-bold mb-2"
+                                for="password">Password</label
+                            >
+                            <input
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                type="password"
+                                name="password"
+                                id="password"
+                            />
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <button
+                                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                type="submit"
+                            >
+                                Sign In
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</BaseLayout>
