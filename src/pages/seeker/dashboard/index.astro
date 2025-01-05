@@ -1,165 +1,281 @@
 ---
 import { supabase } from "../../../lib/supabase";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import Header from "../../../components/Header.astro";
+import Header from "../../../components/seeker/Header.astro";
 
-const { cookies } = Astro;
+const { cookies, redirect } = Astro;
 
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
 
 if (!accessToken || !refreshToken) {
-    return redirect("/");
+	return redirect("/");
 }
 
 const { data, error } = await supabase.auth.setSession({
-    refresh_token: refreshToken.value,
-    access_token: accessToken.value,
+	refresh_token: refreshToken.value,
+	access_token: accessToken.value,
 });
 
 if (error) {
-    cookies.delete("sb-access-token", {
-        path: "/",
-    });
-    cookies.delete("sb-refresh-token", {
-        path: "/",
-    });
+	cookies.delete("sb-access-token", {
+		path: "/",
+	});
+	cookies.delete("sb-refresh-token", {
+		path: "/",
+	});
 
-    return redirect("/");
+	return redirect("/");
 }
 
 const { data: seeker } = await supabase
-    .from("seeker")
-    .select("user_id, name, contact_info")
-    .eq("user_id", data?.user?.id)
-    .single();
+	.from("seeker")
+	.select("user_id, name, resume_url, github_url, linkedin_url, portfolio_url")
+	.eq("user_id", data?.user?.id)
+	.single();
 
-const { data: jobInterests, error: interestsError } = await supabase
-    .from("jobInterests")
-    .select("*")
-    .eq("seeker_id", data?.user?.id);
+const { data: interestedJobs } = await supabase
+	.from("job_interests") // Replace with your actual table name
+	.select("job_id")
+	.eq("seeker_id", data?.user?.id);
+
+const interestedJobIds = new Set(interestedJobs.map((job) => job.job_id));
+
+const { data: jobListings, error: jobsError } = await supabase
+	.from("job_listings")
+	.select("*");
 
 const { data: ownerData } = await supabase.from("owner").select("*");
 ---
 
 <BaseLayout>
-    <div class="flex-grow container mx-auto px-4">
-        <Header title="Patient Dashboard" />
-        <div class="mt-4">
-            <div class="mt-8">
-                <table class="w-full mt-4">
-                    <tbody>
-                        <tr class="border bg-gray-100">
-                            <td class="px-4 py-2 border font-semibold">Name:</td
-                            >
-                            <td class="px-4 py-2 border">{seeker?.name}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <hr class="my-4 border-t border-gray-300" />
-            {
-                interestsError ? (
-                    <p class="text-red-500 mt-4">
-                        There was an error fetching your appointments.
-                    </p>
-                ) : (
-                    <div class="mt-4">
-                        <h2 class="text-xl font-bold">Appointments</h2>
-                        <div class="mt-2">
-                            <table class="w-full mt-4">
-                                <thead>
-                                    <tr>
-                                        <th class="px-4 py-2 border">Doctor</th>
-                                        <th class="px-4 py-2 border">
-                                            Specialty
-                                        </th>
-                                        <th class="px-4 py-2 border">
-                                            Purpose
-                                        </th>
-                                        <th class="px-4 py-2 border">
-                                            Date/Time
-                                        </th>
-                                        <th class="px-4 py-2 border">Status</th>
-                                        <th class="px-4 py-2 border">Modify</th>
-                                        <th class="px-4 py-2 border">Delete</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {jobInterests.map((interest) => {
-                                        const job = ownerData?.find(
-                                            (owner) =>
-                                            owner?.user_id ===
-                                            interest?.job_id,
-                                        );
+	<div class="flex-grow container mx-auto px-4">
+		<Header title="Job Seeker Dashboard" userId={data?.user?.id} />
+		<div class="mt-4">
+			<div class="mt-8">
+				<table class="w-full mt-4">
+					<tbody>
+						<tr class="border bg-gray-100">
+							<td class="px-4 py-2 border font-semibold">Name:</td>
+							<td class="px-4 py-2 border">{seeker?.name}</td>
+						</tr>
+						<tr class="border bg-gray-100">
+							<td class="px-4 py-2 border font-semibold">GitHub Link:</td>
+							<td class="px-4 py-2 border">
+								{
+									seeker?.github_url ? (
+										<a
+											href={seeker.github_url}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{seeker.github_url}
+										</a>
+									) : (
+										"N/A"
+									)
+								}
+							</td>
+						</tr>
+						<tr class="border bg-gray-100">
+							<td class="px-4 py-2 border font-semibold">LinkedIn Link:</td>
+							<td class="px-4 py-2 border">
+								{
+									seeker?.linkedin_url ? (
+										<a
+											href={seeker.linkedin_url}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{seeker.linkedin_url}
+										</a>
+									) : (
+										"N/A"
+									)
+								}
+							</td>
+						</tr>
+						<tr class="border bg-gray-100">
+							<td class="px-4 py-2 border font-semibold">Portfolio Link:</td>
+							<td class="px-4 py-2 border">
+								{
+									seeker?.portfolio_url ? (
+										<a
+											href={seeker.portfolio_url}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{seeker.portfolio_url}
+										</a>
+									) : (
+										"N/A"
+									)
+								}
+							</td>
+						</tr>
+						<tr class="border bg-gray-100">
+							<td class="px-4 py-2 border font-semibold">Resume Link:</td>
+							<td class="px-4 py-2 border">
+								{
+									seeker?.resume_url ? (
+										<a
+											href={seeker.resume_url}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{seeker.resume_url}
+										</a>
+									) : (
+										"N/A"
+									)
+								}
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="mt-8">
+				<hr class="my-4 border-t border-gray-300" />
+				{
+					jobsError ? (
+						<p class="text-red-500 mt-4">
+							There was an error fetching your jobs.
+						</p>
+					) : (
+						<div class="mt-4">
+							<h2 class="text-xl font-bold">Job Listings</h2>
+							<div class="mt-2">
+								<input
+									type="text"
+									id="search-bar"
+									placeholder="Search by tags..."
+									class="w-full p-2 border rounded mb-4"
+								/>
+								<table class="w-full mt-4">
+									<thead>
+										<tr>
+											<th class="px-4 py-2 border">Title</th>
+											<th class="px-4 py-2 border">Description</th>
+											<th class="px-4 py-2 border">Tags</th>
+											<th class="px-4 py-2 border">Company</th>
+											<th class="px-4 py-2 border">Job Expires</th>
+											<th class="px-4 py-2 border">Interested?</th>
+										</tr>
+									</thead>
+									<tbody id="job-list">
+										{jobListings.map((job) => {
+											const isInterested = interestedJobIds.has(job.id);
+											const owner = ownerData?.find(
+												(owner) => owner?.user_id === job?.owner_id
+											);
 
-                                        var utcTime = new Date(
-                                        interest?.time,
-                                        );
-                                        var turkeyOffset = 3 * 60;
-                                        var turkeyTime = new Date(
-                                            utcTime.getTime() +
-                                                turkeyOffset * 60000,
-                                        );
-                                        var formattedTime = turkeyTime
-                                            .toISOString()
-                                            .replace("T", " ")
-                                            .slice(0, 19);
+											const date = new Date(job?.time);
+											const options = {
+												year: "numeric",
+												month: "long",
+												day: "numeric",
+												hour: "2-digit",
+												minute: "2-digit",
+												second: "2-digit",
+												timeZone: "Europe/Istanbul",
+												timeZoneName: "short",
+											};
 
-                                        return (
-                                            <tr class="border">
-                                                <td class="px-4 py-2 border">
-                                                    {job?.name}
-                                                </td>
-                                                <td class="px-4 py-2 border">
-                                                    {job?.specialty}
-                                                </td>
-                                                <td class="px-4 py-2 border">
-                                                    {interest?.purpose}
-                                                </td>
-                                                <td class="px-4 py-2 border">
-                                                    {formattedTime}
-                                                </td>
-                                                <td class="px-4 py-2 border">
-                                                    {interest?.status}
-                                                </td>
-                                                <td class="px-4 py-2 border">
-                                                    <a
-                                                        href={`/patient/appointments/edit/${interest?.id}`}
-                                                        class="text-blue-500"
-                                                    >
-                                                        Edit
-                                                    </a>
-                                                </td>
-                                                <td class="px-4 py-2 border">
-                                                    <form
-                                                        action="/api/appointment/delete"
-                                                        method="post"
-                                                    >
-                                                        <input
-                                                            type="hidden"
-                                                            name="appointment_id"
-                                                            value={
-                                                                interest?.id
-                                                            }
-                                                        />
-                                                        <button
-                                                            type="submit"
-                                                            class="text-red-500"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )
-            }
-        </div>
-    </div>
+											const formattedDate = new Intl.DateTimeFormat(
+												"tr-TR",
+												options
+											).format(date);
+
+											return (
+												<tr
+													class="border job-row"
+													data-tags={job?.tags.join(", ")}
+												>
+													<td class="px-4 py-2 border">{job?.title}</td>
+													<td class="px-4 py-2 border">{job?.description}</td>
+													<td class="px-4 py-2 border">
+														{job?.tags.join(", ")}
+													</td>
+													<td class="px-4 py-2 border">{owner?.company}</td>
+													<td class="px-4 py-2 border">{formattedDate}</td>
+													<td class="px-4 py-2 border">
+														<input
+															type="checkbox"
+															class="job-checkmark"
+															data-job-id={job?.id}
+															data-seeker-id={data?.user?.id}
+															data-owner-id={job?.owner_id}
+															id={`job-${job?.id}`}
+															checked={isInterested}
+															disabled={isInterested}
+														/>
+													</td>
+												</tr>
+											);
+										})}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					)
+				}
+			</div>
+		</div>
+		<script>
+			document
+				.getElementById("search-bar")
+				.addEventListener("input", function () {
+					const searchValue = this.value.toLowerCase();
+					const jobRows = document.querySelectorAll(".job-row");
+
+					jobRows.forEach((row) => {
+						const tags = row.dataset.tags.toLowerCase();
+						if (tags.includes(searchValue)) {
+							row.style.display = "table-row";
+						} else {
+							row.style.display = "none";
+						}
+					});
+				});
+
+			document.querySelectorAll(".job-checkmark").forEach((checkbox) => {
+				checkbox.addEventListener("change", async function () {
+					if (this.disabled) return; // Skip disabled checkboxes
+
+					const jobId = this.dataset.jobId;
+					const seekerId = this.dataset.seekerId;
+					const ownerId = this.dataset.ownerId;
+
+					if (this.checked) {
+						try {
+							const response = await fetch("/api/job/interested", {
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									job_id: jobId,
+									seeker_id: seekerId,
+									owner_id: ownerId,
+								}),
+							});
+
+							const result = await response.json();
+							if (!response.ok) {
+								console.error("Error adding job interest:", result.message);
+								alert("Failed to add job interest.");
+								this.checked = false; // Reset checkbox if failed
+							} else {
+								this.disabled = true; // Disable checkbox on successful submission
+							}
+						} catch (error) {
+							console.error("Error:", error);
+							alert("An error occurred. Please try again later.");
+							this.checked = false; // Reset checkbox if failed
+						}
+					}
+				});
+			});
+		</script>
+	</div>
 </BaseLayout>

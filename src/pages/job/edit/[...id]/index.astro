@@ -1,0 +1,106 @@
+---
+import { supabase } from "../../../../lib/supabase";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import Header from "../../../../components/owner/Header.astro";
+
+const { cookies } = Astro;
+const { id } = Astro.params;
+
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+	return redirect("/");
+}
+
+const { data, error } = await supabase.auth.setSession({
+	refresh_token: refreshToken.value,
+	access_token: accessToken.value,
+});
+
+if (error) {
+	cookies.delete("sb-access-token", {
+		path: "/",
+	});
+	cookies.delete("sb-refresh-token", {
+		path: "/",
+	});
+
+	return redirect("/");
+}
+
+const { data: jobListings } = await supabase
+	.from("job_listings")
+	.select()
+	.eq("id", id)
+	.eq("owner_id", data?.user?.id)
+	.single();
+
+const ownerId = jobListings?.owner_id;
+const jobId = jobListings?.id;
+const time = jobListings?.time;
+const formattedTime = new Date(time).toISOString().slice(0, 16);
+const title = jobListings?.title;
+const tags = jobListings?.tags;
+const description = jobListings?.description;
+---
+
+<BaseLayout>
+	<div class="flex-grow container mx-auto px-4">
+		<Header title="Edit Job Listing" />
+		<form
+			id="appointmentForm"
+			action="/api/job/update"
+			method="post"
+			class="container mx-auto mt-8"
+		>
+			<input type="hidden" id="jobId" name="job_id" value={jobId} />
+			<input type="hidden" id="doctorId" name="owner_id" value={ownerId} />
+			<br />
+			<label for="time" class="block mt-4">Preferred Appointment Time:</label>
+			<input
+				type="datetime-local"
+				id="time"
+				name="time"
+				value={formattedTime}
+				required
+				class="block border border-gray-300 rounded px-4 py-2 mt-2 w-full"
+			/><br />
+
+			<label for="title" class="block mt-4">Title:</label>
+			<input
+				type="text"
+				id="title"
+				name="title"
+				value={title}
+				required
+				class="block border border-gray-300 rounded px-4 py-2 mt-2 w-full"
+			/><br />
+
+			<label for="tags" class="block mt-4">Tags:</label>
+			<input
+				type="text"
+				id="tags"
+				name="tags"
+				value={tags.join(", ")}
+				required
+				class="block border border-gray-300 rounded px-4 py-2 mt-2 w-full"
+			/><br />
+
+			<label for="description" class="block mt-4">Description:</label>
+			<textarea
+				id="description"
+				name="description"
+				required
+				class="block border border-gray-300 rounded px-4 py-2 mt-2 w-full"
+				>{description}</textarea
+			><br />
+
+			<button
+				type="submit"
+				class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+				>Update Job Listing</button
+			>
+		</form>
+	</div>
+</BaseLayout>

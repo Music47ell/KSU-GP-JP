@@ -1,0 +1,165 @@
+---
+import { supabase } from "../../../lib/supabase";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/owner/Header.astro";
+
+const { cookies, redirect } = Astro;
+
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+	return redirect("/");
+}
+
+const { data, error } = await supabase.auth.setSession({
+	refresh_token: refreshToken.value,
+	access_token: accessToken.value,
+});
+
+if (error) {
+	cookies.delete("sb-access-token", {
+		path: "/",
+	});
+	cookies.delete("sb-refresh-token", {
+		path: "/",
+	});
+
+	return redirect("/");
+}
+
+const { data: owner } = await supabase
+	.from("owner")
+	.select("user_id, name, company")
+	.eq("user_id", data?.user?.id)
+	.single();
+
+const { data: jobListings, error: jobsError } = await supabase
+	.from("job_listings")
+	.select("*")
+	.eq("owner_id", data?.user?.id);
+
+const { data: jobInterests } = await supabase
+	.from("job_interests")
+	.select("job_id, seeker_id")
+	.eq("owner_id", data?.user?.id);
+
+const seekerIds = jobInterests.map((interest) => interest.seeker_id);
+
+const { data: seekers } = await supabase
+	.from("seeker")
+	.select("user_id, name, resume_url, github_url, linkedin_url, portfolio_url")
+	.in("user_id", seekerIds);
+
+const interestedSeekersByJob = jobListings.map((job) => {
+	const seekersForJob = jobInterests
+		.filter((interest) => interest.job_id === job.id)
+		.map((interest) => {
+			const seeker = seekers.find((s) => s.user_id === interest.seeker_id);
+			return seeker;
+		});
+
+	return { job, seekers: seekersForJob };
+});
+---
+
+<BaseLayout>
+	<div class="flex-grow container mx-auto px-4">
+		<Header title="Owner Dashboard" />
+		<div class="mt-4">
+			<div class="mt-8">
+				<table class="w-full mt-4">
+					<tbody>
+						<tr class="border bg-gray-100">
+							<td class="px-4 py-2 border font-semibold">Name:</td>
+							<td class="px-4 py-2 border">{owner?.name}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<hr class="my-4 border-t border-gray-300" />
+			{
+				jobsError ? (
+					<p class="text-red-500 mt-4">
+						There was an error fetching your jobs.
+					</p>
+				) : (
+					<div class="mt-4">
+						<h2 class="text-xl font-bold">Jobs</h2>
+						<div class="mt-2">
+							<table class="w-full mt-4">
+								<thead>
+									<tr>
+										<th class="px-4 py-2 border">Title</th>
+										<th class="px-4 py-2 border">Description</th>
+										<th class="px-4 py-2 border">Time</th>
+										<th class="px-4 py-2 border">Tags</th>
+									</tr>
+								</thead>
+								<tbody>
+									{interestedSeekersByJob.map(({ job }) => {
+										const date = new Date(job?.time);
+										const options = {
+											year: "numeric",
+											month: "long",
+											day: "numeric",
+											hour: "2-digit",
+											minute: "2-digit",
+											second: "2-digit",
+											timeZone: "Europe/Istanbul",
+											timeZoneName: "short",
+										};
+										const formattedDate = new Intl.DateTimeFormat(
+											"tr-TR",
+											options
+										).format(date);
+										return (
+											<tr class="border">
+												<td class="px-4 py-2 border">{job?.title}</td>
+												<td class="px-4 py-2 border">{job?.description}</td>
+												<td class="px-4 py-2 border">{formattedDate}</td>
+												<td class="px-4 py-2 border">{job?.tags.join(", ")}</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						</div>
+						<hr class="my-4 border-t border-gray-300" />
+						{/* New section to display seekers' info */}
+						<h2 class="text-xl font-bold mt-4">Interested Seekers</h2>
+						<div class="mt-2">
+							<table class="w-full mt-4">
+								<thead>
+									<tr>
+										<th class="px-4 py-2 border">Job Title</th>
+										<th class="px-4 py-2 border">Seeker Name</th>
+										<th class="px-4 py-2 border">Profile Page</th>
+									</tr>
+								</thead>
+								<tbody>
+									{interestedSeekersByJob.map(({ job, seekers }) => {
+										return seekers.map((seeker) => (
+											<tr class="border">
+												<td class="px-4 py-2 border">{job?.title}</td>
+												<td class="px-4 py-2 border">{seeker?.name}</td>
+												<td class="px-4 py-2 border">
+													<a
+														href={`/seeker/profile/view/${seeker?.user_id}`}
+														class="text-blue-500 block"
+													>
+														GO To Profile
+													</a>
+												</td>
+											</tr>
+										));
+									})}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				)
+			}
+		</div>
+	</div>
+</BaseLayout>

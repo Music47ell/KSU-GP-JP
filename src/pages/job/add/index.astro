@@ -1,0 +1,96 @@
+---
+import { supabase } from "../../../lib/supabase";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/owner/Header.astro";
+const { cookies, redirect } = Astro;
+
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+	redirect("/");
+}
+
+const { data, error } = await supabase.auth.setSession({
+	refresh_token: refreshToken.value,
+	access_token: accessToken.value,
+});
+
+if (error) {
+	cookies.delete("sb-access-token", {
+		path: "/",
+	});
+	cookies.delete("sb-refresh-token", {
+		path: "/",
+	});
+
+	redirect("/");
+}
+---
+
+<BaseLayout>
+	<Header title="Add A Job" />
+	<div class="flex-grow flex justify-center items-center">
+		<div class="max-w-md w-full">
+			<div class="text-center">
+				<img
+					src="/businessman.png"
+					alt="Job Portal Logo"
+					class="w-32 mx-auto mb-8"
+				/>
+				<h1 class="text-2xl mb-4">Add Job Listing</h1>
+				<p>
+					Want to see your jobs? <a
+						href="/owner/dashboard"
+						class="text-blue-500">Go to Dashboard</a
+					>
+				</p>
+				<form action="/api/job/add" method="post">
+					<input
+						type="hidden"
+						id="owner_id"
+						name="owner_id"
+						value={data?.user?.id}
+					/>
+					<label for="title" class="block text-gray-700 text-sm font-bold mb-2"
+						>Job Title</label
+					>
+					<input
+						type="text"
+						name="title"
+						id="title"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+						required
+					/>
+					<label
+						for="description"
+						class="block text-gray-700 text-sm font-bold mb-2"
+						>Description</label
+					>
+					<textarea
+						name="description"
+						id="description"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+						rows="4"
+						required></textarea>
+					<label for="tags" class="block text-gray-700 text-sm font-bold mb-2"
+						>Tags (comma-separated)</label
+					>
+					<input
+						type="text"
+						name="tags"
+						id="tags"
+						placeholder="e.g., remote, full-time, marketing"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+						required
+					/>
+					<button
+						type="submit"
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+						>Submit Job</button
+					>
+				</form>
+			</div>
+		</div>
+	</div>
+</BaseLayout>

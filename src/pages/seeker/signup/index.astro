@@ -4,65 +4,101 @@ import Header from "../../../components/Header.astro";
 ---
 
 <BaseLayout>
-    <Header />
-    <div class="flex-grow flex justify-center items-center">
-        <div class="max-w-md w-full">
-            <div class="text-center">
-                <img
-                    src="/businessman.png"
-                    alt="Job Portal Logo"
-                    class="w-32 mx-auto mb-8"
-                />
-                <h1 class="text-2xl mb-4">Register</h1>
-                <p>
-                    Already have an account? <a href="/" class="text-blue-500"
-                        >Sign in</a
-                    >
-                </p>
-                <form action="/api/auth/signup" method="post">
-                    <label
-                        for="name"
-                        class="block text-gray-700 text-sm font-bold mb-2"
-                        >Name</label
-                    >
-                    <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-                        required
-                    />
-                    <label
-                        for="email"
-                        class="block text-gray-700 text-sm font-bold mb-2"
-                        >Email</label
-                    >
-                    <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-                        required
-                    />
-                    <label
-                        for="password"
-                        class="block text-gray-700 text-sm font-bold mb-2"
-                        >Password</label
-                    >
-                    <input
-                        type="password"
-                        name="password"
-                        id="password"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-                        required
-                    />
-                    <button
-                        type="submit"
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                        >Sign Up</button
-                    >
-                </form>
-            </div>
-        </div>
-    </div>
+	<Header />
+	<div class="flex-grow flex justify-center items-center">
+		<div class="max-w-md w-full">
+			<div class="text-center">
+				<img
+					src="/businessman.png"
+					alt="Job Portal Logo"
+					class="w-32 mx-auto mb-8"
+				/>
+				<h1 class="text-2xl mb-4">Register</h1>
+				<p>
+					Already have an account? <a href="/" class="text-blue-500">Sign in</a>
+				</p>
+				<form action="/api/auth/seeker/signup" method="post">
+					<label for="name" class="block text-gray-700 text-sm font-bold mb-2"
+						>Name</label
+					>
+					<input
+						type="text"
+						name="name"
+						id="name"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+						required
+					/>
+					<label for="email" class="block text-gray-700 text-sm font-bold mb-2"
+						>Email</label
+					>
+					<input
+						type="email"
+						name="email"
+						id="email"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+						required
+					/>
+					<label
+						for="password"
+						class="block text-gray-700 text-sm font-bold mb-2">Password</label
+					>
+					<input
+						type="password"
+						name="password"
+						id="password"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+						required
+					/>
+					<label
+						for="resume_url"
+						class="block text-gray-700 text-sm font-bold mb-2">Resume Url</label
+					>
+					<input
+						type="text"
+						name="resume_url"
+						id="resume_url"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+						required
+					/>
+					<label
+						for="github_url"
+						class="block text-gray-700 text-sm font-bold mb-2">GitHub Url</label
+					>
+					<input
+						type="text"
+						name="github_url"
+						id="github_url"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+					/>
+					<label
+						for="linkedin_url"
+						class="block text-gray-700 text-sm font-bold mb-2"
+						>LinkedIn Url</label
+					>
+					<input
+						type="text"
+						name="linkedin_url"
+						id="linkedin_url"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+					/>
+					<label
+						for="portfolio_url"
+						class="block text-gray-700 text-sm font-bold mb-2"
+						>Portfolio Url</label
+					>
+					<input
+						type="text"
+						name="portfolio_url"
+						id="portfolio_url"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+					/>
+					<button
+						type="submit"
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+						>Sign Up</button
+					>
+				</form>
+			</div>
+		</div>
+	</div>
 </BaseLayout>
