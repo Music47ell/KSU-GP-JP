@@ -94,6 +94,7 @@ const interestedSeekersByJob = jobListings.map((job) => {
 										<th class="px-4 py-2 border">Description</th>
 										<th class="px-4 py-2 border">Time</th>
 										<th class="px-4 py-2 border">Tags</th>
+										<th class="px-4 py-2 border">Modify</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -119,6 +120,14 @@ const interestedSeekersByJob = jobListings.map((job) => {
 												<td class="px-4 py-2 border">{job?.description}</td>
 												<td class="px-4 py-2 border">{formattedDate}</td>
 												<td class="px-4 py-2 border">{job?.tags.join(", ")}</td>
+												<td class="px-4 py-2 border">
+													<a
+														href={`/job/edit/${job?.id}`}
+														class="text-blue-500 block"
+													>
+														Edit
+													</a>
+												</td>
 											</tr>
 										);
 									})}

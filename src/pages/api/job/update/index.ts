@@ -3,8 +3,8 @@ import { supabase } from "../../../../lib/supabase";
 
 export const POST: APIRoute = async ({ request, redirect }) => {
 	const formData = await request.formData();
-	const job_id = formData.get("job_id")?.toString();
-	const owner_id = formData.get("owner_id")?.toString();
+	const job_id = formData.get("jobId")?.toString();
+	const owner_id = formData.get("ownerId")?.toString();
 	const time = formData.get("time")?.toString();
 	const title = formData.get("title")?.toString();
 	const tags = formData.get("tags")?.toString();

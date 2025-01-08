@@ -38,8 +38,6 @@ const { data: jobListings } = await supabase
 
 const ownerId = jobListings?.owner_id;
 const jobId = jobListings?.id;
-const time = jobListings?.time;
-const formattedTime = new Date(time).toISOString().slice(0, 16);
 const title = jobListings?.title;
 const tags = jobListings?.tags;
 const description = jobListings?.description;
@@ -55,17 +53,8 @@ const description = jobListings?.description;
 			class="container mx-auto mt-8"
 		>
 			<input type="hidden" id="jobId" name="job_id" value={jobId} />
-			<input type="hidden" id="doctorId" name="owner_id" value={ownerId} />
+			<input type="hidden" id="ownerId" name="owner_id" value={ownerId} />
 			<br />
-			<label for="time" class="block mt-4">Preferred Appointment Time:</label>
-			<input
-				type="datetime-local"
-				id="time"
-				name="time"
-				value={formattedTime}
-				required
-				class="block border border-gray-300 rounded px-4 py-2 mt-2 w-full"
-			/><br />
 
 			<label for="title" class="block mt-4">Title:</label>
 			<input

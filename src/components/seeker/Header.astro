@@ -6,13 +6,15 @@ const { title, userId } = Astro.props;
 	class="flex flex-col md:flex-row items-center justify-between bg-green-500 text-white p-4"
 >
 	<div class="flex items-center mb-4 md:mb-0">
-		<a href="/patient/dashboard" class="text-blue-500">
+		<a href="/seeker/dashboard" class="text-blue-500">
 			<img src="/businessman.png" alt="Logo" class="h-8 mr-4" />
 		</a>
 		<h1 class="text-2xl font-bold">{title}</h1>
 	</div>
 	<div class="flex items-center">
-		<a href={`/seeker/profile/${userId}`} class="mr-4 md:mr-8">Edit Profile</a>
+		<a href={`/seeker/profile/edit/${userId}`} class="mr-4 md:mr-8"
+			>Edit Profile</a
+		>
 		<form action="/api/auth/signout" class="inline">
 			<button type="submit" class="font-bold py-2 px-4 rounded">Sign out</button
 			>
