@@ -1,4 +1,1 @@
-# Exclude the worker bundle from static asset serving.
-# These files contain @ in their names and would be
-# normalized to %40 by Cloudflare edge, causing 307 redirects.
 _worker.js
