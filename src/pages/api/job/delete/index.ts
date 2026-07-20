@@ -2,17 +2,27 @@ import type { APIRoute } from "astro";
 import { supabase } from "../../../../lib/supabase";
 
 export const POST: APIRoute = async ({ request, redirect }) => {
-	const formData = await request.formData();
-	const job_id = formData.get("job_id")?.toString();
+	try {
+		const formData = await request.formData();
+		const job_id = formData.get("job_id")?.toString();
 
-	const { error } = await supabase
-		.from("job_interests")
-		.delete()
-		.eq("id", job_id);
+		if (!job_id) {
+			return new Response(JSON.stringify({ error: "Job ID is required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+		}
 
-	if (error) {
-		return new Response(error.message, { status: 500 });
+		const { error } = await supabase
+			.from("job_interests")
+			.delete()
+			.eq("id", job_id);
+
+		if (error) {
+			console.error("Job delete error:", error.message);
+			return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+		}
+
+		return redirect("/seeker/dashboard");
+	} catch (err) {
+		console.error("Job delete error:", err);
+		return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: { "Content-Type": "application/json" } });
 	}
-
-	return redirect("/seeker/dashboard");
 };

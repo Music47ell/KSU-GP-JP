@@ -1,47 +1,170 @@
-# Astro Starter Kit: Minimal
+# KSU Job Portal
 
-```sh
-npm create astro@latest -- --template minimal
+A multi-role job marketplace built with Astro, Supabase, and Tailwind CSS.  
+Owners post job listings; seekers browse and express interest; admins review and approve.
+
+---
+
+## Roles & Capabilities
+
+| Role      | Capabilities                                                    |
+| --------- | --------------------------------------------------------------- |
+| **Admin** | View all listings, approve/deny jobs, manage platform           |
+| **Owner** | Post/edit job listings, view interested seekers                 |
+| **Seeker**| Browse jobs, search by tags, express interest, manage profile   |
+
+---
+
+## Tech Stack
+
+| Layer        | Technology                                 |
+| ------------ | ------------------------------------------ |
+| Framework    | [Astro](https://astro.build) 5             |
+| Styling      | [Tailwind CSS](https://tailwindcss.com) 3  |
+| Auth & DB    | [Supabase](https://supabase.com)           |
+| Deploy       | [Cloudflare Pages](https://pages.cloudflare.com) |
+
+---
+
+## Setup
+
+```bash
+# 1. Clone and install
+git clone <repo-url> && cd ksu-gp-jp
+bun install
+
+# 2. Environment
+cp .env.example .env
+# Fill in SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+
+# 3. Database
+# Open src/db/setup.sql and run every statement in your Supabase SQL Editor.
+
+# 4. (Optional) Seed test accounts
+bun run seed
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
+---
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Database
 
-## 🚀 Project Structure
+Run **`src/db/setup.sql`** in your Supabase SQL Editor. It creates:
 
-Inside of your Astro project, you'll see the following folders and files:
+- Extensions (`pgcrypto`, `uuid-ossp`)
+- `JOB_APPROVAL` enum
+- Tables: `admins`, `owner`, `seeker`, `job_listings`, `job_interests`
+- Row-Level Security policies
+- `handle_new_user()` trigger that auto-creates profiles after signup
 
-```text
-/
-├── public/
+> Do NOT manually insert into `auth.users` — use `supabase.auth.admin.createUser()`  
+> (or sign up via the UI and the trigger handles the rest).
+
+---
+
+## Seed Accounts
+
+| Role      | Email              | Password      |
+| --------- | ------------------ | ------------- |
+| Admin     | admin@test.com     | password123   |
+| Owner     | owner@test.com     | password123   |
+| Seeker    | seeker@test.com    | password123   |
+
+Run with `bun run seed` after setting `SUPABASE_SERVICE_ROLE_KEY` in `.env`.
+
+---
+
+## Development
+
+```bash
+bun run dev       # Start dev server (localhost:4321)
+bun run build     # Production build
+bun run preview   # Preview production build
+bun run seed      # Seed test accounts
+```
+
+---
+
+## Project Structure
+
+```
+ksu-gp-jp/
+├── public/                   # Static assets (images, favicon)
+├── scripts/
+│   └── seed.ts               # Database seeder
 ├── src/
+│   ├── assets/
+│   │   └── css/
+│   │       └── tailwind.css
+│   ├── components/
+│   │   ├── Header.astro           # Guest header
+│   │   ├── Footer.astro           # Site footer
+│   │   ├── admin/
+│   │   │   └── Header.astro       # Admin nav header
+│   │   ├── owner/
+│   │   │   └── Header.astro       # Owner nav header
+│   │   └── seeker/
+│   │       └── Header.astro       # Seeker nav header
+│   ├── db/
+│   │   └── setup.sql              # Full database schema
+│   ├── layouts/
+│   │   └── BaseLayout.astro       # Root layout (Inter font, meta)
+│   ├── lib/
+│   │   └── supabase.ts            # Supabase client helpers
 │   └── pages/
-│       └── index.astro
-└── package.json
+│       ├── index.astro            # Landing / sign-in
+│       ├── admin/
+│       │   └── dashboard/
+│       │       └── index.astro
+│       ├── api/
+│       │   ├── admin/approve/
+│       │   ├── auth/
+│       │   │   ├── admin/signup/
+│       │   │   ├── owner/signup/
+│       │   │   ├── seeker/signup/
+│       │   │   ├── signin/
+│       │   │   └── signout/
+│       │   ├── job/
+│       │   │   ├── add/
+│       │   │   ├── approve/
+│       │   │   ├── create/
+│       │   │   ├── delete/
+│       │   │   ├── interested/
+│       │   │   └── update/
+│       │   ├── owner/update/
+│       │   └── seeker/profile/update/
+│       ├── job/
+│       │   ├── add/
+│       │   ├── approve/[...id]/
+│       │   └── edit/[...id]/
+│       ├── owner/
+│       │   ├── dashboard/
+│       │   └── signup/
+│       └── seeker/
+│           ├── dashboard/
+│           ├── profile/
+│           │   ├── edit/[...id]/
+│           │   └── view/[...id]/
+│           └── signup/
+├── astro.config.mjs
+├── package.json
+├── tailwind.config.mjs
+├── tsconfig.json
+├── wrangler.toml
+└── .env.example
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+---
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Environment Variables
 
-Any static assets, like images, can be placed in the `public/` directory.
+| Variable                     | Required | Description                        |
+| ---------------------------- | -------- | ---------------------------------- |
+| `SUPABASE_URL`               | Yes      | Supabase project URL               |
+| `SUPABASE_ANON_KEY`          | Yes      | Supabase anonymous (public) key    |
+| `SUPABASE_SERVICE_ROLE_KEY`  | Seeding  | Service-role key (for `seed.ts`)   |
 
-## 🧞 Commands
+---
 
-All commands are run from the root of the project, from a terminal:
+## Credits
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Developed by [Ahmet ALMAZ](https://www.news47ell.com) — KSU Graduation Project.

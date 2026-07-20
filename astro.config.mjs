@@ -2,7 +2,7 @@ import { defineConfig } from "astro/config";
 
 import tailwind from "@astrojs/tailwind";
 
-import vercel from "@astrojs/vercel";
+import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
@@ -10,6 +10,6 @@ export default defineConfig({
 	base: "/",
 	trailingSlash: "never",
 	integrations: [tailwind()],
-	adapter: vercel(),
+	adapter: cloudflare(),
 	output: "server",
 });

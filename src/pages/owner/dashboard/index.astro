@@ -4,27 +4,17 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Header from "../../../components/owner/Header.astro";
 
 const { cookies, redirect } = Astro;
-
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
-
-if (!accessToken || !refreshToken) {
-	return redirect("/");
-}
+if (!accessToken || !refreshToken) { return redirect("/"); }
 
 const { data, error } = await supabase.auth.setSession({
 	refresh_token: refreshToken.value,
 	access_token: accessToken.value,
 });
-
 if (error) {
-	cookies.delete("sb-access-token", {
-		path: "/",
-	});
-	cookies.delete("sb-refresh-token", {
-		path: "/",
-	});
-
+	cookies.delete("sb-access-token", { path: "/" });
+	cookies.delete("sb-refresh-token", { path: "/" });
 	return redirect("/");
 }
 
@@ -44,131 +34,165 @@ const { data: jobInterests } = await supabase
 	.select("job_id, seeker_id")
 	.eq("owner_id", data?.user?.id);
 
-const seekerIds = jobInterests.map((interest) => interest.seeker_id);
+const seekerIds = jobInterests?.map((i: { seeker_id: string }) => i.seeker_id) ?? [];
 
 const { data: seekers } = await supabase
 	.from("seeker")
 	.select("user_id, name, resume_url, github_url, linkedin_url, portfolio_url")
-	.in("user_id", seekerIds);
+	.in("user_id", seekerIds.length > 0 ? seekerIds : ["none"]);
 
-const interestedSeekersByJob = jobListings.map((job) => {
-	const seekersForJob = jobInterests
-		.filter((interest) => interest.job_id === job.id)
-		.map((interest) => {
-			const seeker = seekers.find((s) => s.user_id === interest.seeker_id);
-			return seeker;
+interface JobPosting {
+	id: string; title: string; description: string; tags: string[];
+	owner_id: string; time: string; approved: string;
+}
+interface JobInterest {
+	job_id: string; seeker_id: string;
+}
+interface SeekerProfile {
+	user_id: string; name: string; resume_url: string;
+	github_url: string; linkedin_url: string; portfolio_url: string;
+}
+
+const interestedSeekersByJob: { job: JobPosting; seekers: (SeekerProfile | undefined)[] }[] = (jobListings ?? []).map((job: JobPosting) => {
+	const seekersForJob = (jobInterests ?? [])
+		.filter((interest: JobInterest) => interest.job_id === job.id)
+		.map((interest: JobInterest) => {
+			return seekers?.find((s: SeekerProfile) => s.user_id === interest.seeker_id);
 		});
-
 	return { job, seekers: seekersForJob };
 });
+
+const statusBadge: Record<string, string> = {
+	APPROVED: "bg-green-50 text-green-700 ring-green-600/20",
+	DENIED: "bg-red-50 text-red-700 ring-red-600/20",
+	PENDING: "bg-yellow-50 text-yellow-700 ring-yellow-600/20",
+};
 ---
 
 <BaseLayout>
-	<div class="flex-grow container mx-auto px-4">
+	<div class="flex-1">
 		<Header title="Owner Dashboard" />
-		<div class="mt-4">
-			<div class="mt-8">
-				<table class="w-full mt-4">
-					<tbody>
-						<tr class="border bg-gray-100">
-							<td class="px-4 py-2 border font-semibold">Name:</td>
-							<td class="px-4 py-2 border">{owner?.name}</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<hr class="my-4 border-t border-gray-300" />
-			{
-				jobsError ? (
-					<p class="text-red-500 mt-4">
-						There was an error fetching your jobs.
-					</p>
-				) : (
-					<div class="mt-4">
-						<h2 class="text-xl font-bold">Jobs</h2>
-						<div class="mt-2">
-							<table class="w-full mt-4">
-								<thead>
-									<tr>
-										<th class="px-4 py-2 border">Title</th>
-										<th class="px-4 py-2 border">Description</th>
-										<th class="px-4 py-2 border">Time</th>
-										<th class="px-4 py-2 border">Tags</th>
-										<th class="px-4 py-2 border">Modify</th>
-									</tr>
-								</thead>
-								<tbody>
-									{interestedSeekersByJob.map(({ job }) => {
-										const date = new Date(job?.time);
-										const options = {
-											year: "numeric",
-											month: "long",
-											day: "numeric",
-											hour: "2-digit",
-											minute: "2-digit",
-											second: "2-digit",
-											timeZone: "Europe/Istanbul",
-											timeZoneName: "short",
-										};
-										const formattedDate = new Intl.DateTimeFormat(
-											"tr-TR",
-											options
-										).format(date);
-										return (
-											<tr class="border">
-												<td class="px-4 py-2 border">{job?.title}</td>
-												<td class="px-4 py-2 border">{job?.description}</td>
-												<td class="px-4 py-2 border">{formattedDate}</td>
-												<td class="px-4 py-2 border">{job?.tags.join(", ")}</td>
-												<td class="px-4 py-2 border">
-													<a
-														href={`/job/edit/${job?.id}`}
-														class="text-blue-500 block"
-													>
-														Edit
-													</a>
-												</td>
-											</tr>
-										);
-									})}
-								</tbody>
-							</table>
-						</div>
-						<hr class="my-4 border-t border-gray-300" />
-						{/* New section to display seekers' info */}
-						<h2 class="text-xl font-bold mt-4">Interested Seekers</h2>
-						<div class="mt-2">
-							<table class="w-full mt-4">
-								<thead>
-									<tr>
-										<th class="px-4 py-2 border">Job Title</th>
-										<th class="px-4 py-2 border">Seeker Name</th>
-										<th class="px-4 py-2 border">Profile Page</th>
-									</tr>
-								</thead>
-								<tbody>
-									{interestedSeekersByJob.map(({ job, seekers }) => {
-										return seekers.map((seeker) => (
-											<tr class="border">
-												<td class="px-4 py-2 border">{job?.title}</td>
-												<td class="px-4 py-2 border">{seeker?.name}</td>
-												<td class="px-4 py-2 border">
-													<a
-														href={`/seeker/profile/view/${seeker?.user_id}`}
-														class="text-blue-500 block"
-													>
-														GO To Profile
-													</a>
-												</td>
-											</tr>
-										));
-									})}
-								</tbody>
-							</table>
-						</div>
+		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-6 mb-8">
+				<h2 class="text-lg font-semibold text-gray-900 mb-4">My Profile</h2>
+				<dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Name</dt>
+						<dd class="mt-1 text-sm font-medium text-gray-900">{owner?.name ?? "N/A"}</dd>
 					</div>
-				)
-			}
-		</div>
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Company</dt>
+						<dd class="mt-1 text-sm font-medium text-gray-900">{owner?.company ?? "N/A"}</dd>
+					</div>
+				</dl>
+			</div>
+
+			{ jobsError ? (
+				<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm mb-8">
+					There was an error fetching your jobs.
+				</div>
+			) : (
+				<>
+					<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 mb-8">
+						<div class="px-6 py-5 border-b border-gray-200">
+							<h2 class="text-lg font-semibold text-gray-900">My Job Listings</h2>
+						</div>
+						{ jobListings && jobListings.length > 0 ? (
+							<div class="overflow-x-auto">
+								<table class="w-full">
+									<thead>
+										<tr class="bg-gray-50">
+											<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
+											<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+											<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
+											<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+											<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Posted</th>
+											<th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+										</tr>
+									</thead>
+									<tbody class="divide-y divide-gray-200">
+										{ interestedSeekersByJob.map(({ job }: { job: JobPosting }) => {
+											const date = new Date(job?.time);
+											const formattedDate = new Intl.DateTimeFormat("tr-TR", {
+												year: "numeric", month: "long", day: "numeric",
+												hour: "2-digit", minute: "2-digit",
+												timeZone: "Europe/Istanbul", timeZoneName: "short",
+											}).format(date);
+											return (
+												<tr class="hover:bg-gray-50 transition-colors">
+													<td class="px-6 py-4 text-sm font-medium text-gray-900">{job?.title}</td>
+													<td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{job?.description}</td>
+													<td class="px-6 py-4 text-sm text-gray-600">
+														<div class="flex flex-wrap gap-1">
+															{ job?.tags.map((tag: string) => (
+																<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700">{tag}</span>
+															))}
+														</div>
+													</td>
+													<td class="px-6 py-4">
+														<span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset ${statusBadge[job?.approved] ?? statusBadge.PENDING}`}>
+															{job?.approved}
+														</span>
+													</td>
+													<td class="px-6 py-4 text-sm text-gray-500">{formattedDate}</td>
+													<td class="px-6 py-4 text-center">
+														<a href={`/job/edit/${job?.id}`} class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">Edit</a>
+													</td>
+												</tr>
+											);
+										})}
+									</tbody>
+								</table>
+							</div>
+						) : (
+							<div class="text-center py-12">
+								<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+								<h3 class="mt-4 text-sm font-semibold text-gray-900">No job listings yet</h3>
+								<p class="mt-1 text-sm text-gray-500">Get started by posting your first job.</p>
+								<a href="/job/add" class="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors">Post a Job</a>
+							</div>
+						)}
+					</div>
+
+					<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200">
+						<div class="px-6 py-5 border-b border-gray-200">
+							<h2 class="text-lg font-semibold text-gray-900">Interested Seekers</h2>
+						</div>
+						{ interestedSeekersByJob.some(({ seekers }) => seekers.length > 0) ? (
+							<div class="overflow-x-auto">
+								<table class="w-full">
+									<thead>
+										<tr class="bg-gray-50">
+											<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Job Title</th>
+											<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Seeker Name</th>
+											<th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Profile</th>
+										</tr>
+									</thead>
+									<tbody class="divide-y divide-gray-200">
+										{ interestedSeekersByJob.map(({ job, seekers }: { job: JobPosting; seekers: (SeekerProfile | undefined)[] }) => {
+											return seekers.map((seeker: SeekerProfile | undefined) => (
+												<tr class="hover:bg-gray-50 transition-colors">
+													<td class="px-6 py-4 text-sm font-medium text-gray-900">{job?.title}</td>
+													<td class="px-6 py-4 text-sm text-gray-600">{seeker?.name ?? "Unknown"}</td>
+													<td class="px-6 py-4 text-center">
+														<a href={`/seeker/profile/view/${seeker?.user_id}`} class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">View Profile</a>
+													</td>
+												</tr>
+											));
+										})}
+									</tbody>
+								</table>
+							</div>
+						) : (
+							<div class="text-center py-12">
+								<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+								<h3 class="mt-4 text-sm font-semibold text-gray-900">No interested seekers yet</h3>
+								<p class="mt-1 text-sm text-gray-500">When seekers express interest in your jobs, they'll appear here.</p>
+							</div>
+						)}
+					</div>
+				</>
+			)}
+		</main>
 	</div>
 </BaseLayout>

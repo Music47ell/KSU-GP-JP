@@ -1,30 +1,20 @@
 ---
 import { supabase } from "../../../lib/supabase";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import Header from "../../../components/seeker/Header.astro";
+import Header from "../../../components/admin/Header.astro";
 
 const { cookies, redirect } = Astro;
-
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
-
-if (!accessToken || !refreshToken) {
-	return redirect("/");
-}
+if (!accessToken || !refreshToken) { return redirect("/"); }
 
 const { data, error } = await supabase.auth.setSession({
 	refresh_token: refreshToken.value,
 	access_token: accessToken.value,
 });
-
 if (error) {
-	cookies.delete("sb-access-token", {
-		path: "/",
-	});
-	cookies.delete("sb-refresh-token", {
-		path: "/",
-	});
-
+	cookies.delete("sb-access-token", { path: "/" });
+	cookies.delete("sb-refresh-token", { path: "/" });
 	return redirect("/");
 }
 
@@ -39,86 +29,82 @@ const { data: jobListings, error: listingsError } = await supabase
 	.select("*");
 
 const { data: ownerData } = await supabase.from("owner").select("*");
+
+const statusBadge: Record<string, string> = {
+	APPROVED: "bg-green-50 text-green-700 ring-green-600/20",
+	DENIED: "bg-red-50 text-red-700 ring-red-600/20",
+	PENDING: "bg-yellow-50 text-yellow-700 ring-yellow-600/20",
+};
 ---
 
 <BaseLayout>
-	<div class="flex-grow container mx-auto px-4">
+	<div class="flex-1">
 		<Header title="Admin Dashboard" />
-		<div class="mt-4">
-			<div class="mt-8">
-				<table class="w-full mt-4">
-					<tbody>
-						<tr class="border bg-gray-100">
-							<td class="px-4 py-2 border font-semibold">Name:</td>
-							<td class="px-4 py-2 border">{admin?.name}</td>
-						</tr>
-					</tbody>
-				</table>
+		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-6 mb-8">
+				<h2 class="text-lg font-semibold text-gray-900 mb-4">My Profile</h2>
+				<dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Name</dt>
+						<dd class="mt-1 text-sm font-medium text-gray-900">{admin?.name ?? "N/A"}</dd>
+					</div>
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Role</dt>
+						<dd class="mt-1 text-sm"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-600/20">Administrator</span></dd>
+					</div>
+				</dl>
 			</div>
-			<hr class="my-4 border-t border-gray-300" />
-			{
-				listingsError ? (
-					<p class="text-red-500 mt-4">
-						There was an error fetching your job listings.
-					</p>
-				) : (
-					<div class="mt-4">
-						<h2 class="text-xl font-bold">Waiting for approval</h2>
-						<div class="mt-2">
-							<table class="w-full mt-4">
+
+			{ listingsError ? (
+				<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm mb-8">
+					There was an error fetching job listings.
+				</div>
+			) : (
+				<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200">
+					<div class="px-6 py-5 border-b border-gray-200">
+						<h2 class="text-lg font-semibold text-gray-900">Job Listings</h2>
+					</div>
+					{ jobListings && jobListings.length > 0 ? (
+						<div class="overflow-x-auto">
+							<table class="w-full">
 								<thead>
-									<tr>
-										<th class="px-4 py-2 border">Title</th>
-										<th class="px-4 py-2 border">Description</th>
-										<th class="px-4 py-2 border">Tags</th>
-										<th class="px-4 py-2 border">Company</th>
-										<th class="px-4 py-2 border">Job Expires</th>
-										<th class="px-4 py-2 border">Status</th>
-										<th class="px-4 py-2 border">Approve</th>
+									<tr class="bg-gray-50">
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Posted</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+										<th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Review</th>
 									</tr>
 								</thead>
-								<tbody>
-									{jobListings.map((job) => {
-										const owner = ownerData?.find(
-											(owner) => owner?.user_id === job?.owner_id
-										);
-
-										// Parse the ISO string into a Date object
+								<tbody class="divide-y divide-gray-200">
+									{ jobListings.map((job: { id: string; title: string; description: string; tags: string[]; owner_id: string; time: string; approved: string }) => {
+										const owner = ownerData?.find((o: { user_id: string; company?: string }) => o?.user_id === job?.owner_id);
 										const date = new Date(job?.time);
-
-										// Explicitly type the options to help TypeScript recognize them
-										const options: Intl.DateTimeFormatOptions = {
-											year: "numeric",
-											month: "long",
-											day: "numeric",
-											hour: "2-digit",
-											minute: "2-digit",
-											second: "2-digit",
-											timeZone: "Europe/Istanbul",
-											timeZoneName: "short",
-										};
-
-										// Format the date
-										const formattedDate = new Intl.DateTimeFormat(
-											"tr-TR",
-											options
-										).format(date);
-
+										const formattedDate = new Intl.DateTimeFormat("tr-TR", {
+											year: "numeric", month: "long", day: "numeric",
+											hour: "2-digit", minute: "2-digit",
+											timeZone: "Europe/Istanbul", timeZoneName: "short",
+										}).format(date);
 										return (
-											<tr class="border">
-												<td class="px-4 py-2 border">{job?.title}</td>
-												<td class="px-4 py-2 border">{job?.description}</td>
-												<td class="px-4 py-2 border">{job?.tags.join(", ")}</td>
-												<td class="px-4 py-2 border">{owner?.company}</td>
-												<td class="px-4 py-2 border">{formattedDate}</td>
-												<td class="px-4 py-2 border">{job?.approved}</td>
-												<td class="px-4 py-2 border">
-													<a
-														href={`/job/approve/${job?.id}`}
-														class="text-blue-500"
-													>
-														Edit
-													</a>
+											<tr class="hover:bg-gray-50 transition-colors">
+												<td class="px-6 py-4 text-sm font-medium text-gray-900">{job?.title}</td>
+												<td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{job?.description}</td>
+												<td class="px-6 py-4 text-sm text-gray-600">
+													<div class="flex flex-wrap gap-1">
+														{ job?.tags.map((tag: string) => (
+															<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700">{tag}</span>
+														))}
+													</div>
+												</td>
+												<td class="px-6 py-4 text-sm text-gray-600">{owner?.company ?? "—"}</td>
+												<td class="px-6 py-4 text-sm text-gray-500">{formattedDate}</td>
+												<td class="px-6 py-4">
+													<span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset ${statusBadge[job?.approved] ?? statusBadge.PENDING}`}>{job?.approved}</span>
+												</td>
+												<td class="px-6 py-4 text-center">
+													<a href={`/job/approve/${job?.id}`} class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">Review</a>
 												</td>
 											</tr>
 										);
@@ -126,9 +112,15 @@ const { data: ownerData } = await supabase.from("owner").select("*");
 								</tbody>
 							</table>
 						</div>
-					</div>
-				)
-			}
-		</div>
+					) : (
+						<div class="text-center py-12">
+							<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+							<h3 class="mt-4 text-sm font-semibold text-gray-900">No job listings</h3>
+							<p class="mt-1 text-sm text-gray-500">There are no job listings to review yet.</p>
+						</div>
+					)}
+				</div>
+			)}
+		</main>
 	</div>
 </BaseLayout>

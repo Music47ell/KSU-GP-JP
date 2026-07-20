@@ -2,22 +2,24 @@
 const { title, userId } = Astro.props;
 ---
 
-<div
-	class="flex flex-col md:flex-row items-center justify-between bg-green-500 text-white p-4"
->
-	<div class="flex items-center mb-4 md:mb-0">
-		<a href="/seeker/dashboard" class="text-blue-500">
-			<img src="/businessman.png" alt="Logo" class="h-8 mr-4" />
-		</a>
-		<h1 class="text-2xl font-bold">{title}</h1>
-	</div>
-	<div class="flex items-center">
-		<a href={`/seeker/profile/edit/${userId}`} class="mr-4 md:mr-8"
-			>Edit Profile</a
-		>
-		<form action="/api/auth/signout" class="inline">
-			<button type="submit" class="font-bold py-2 px-4 rounded">Sign out</button
-			>
-		</form>
-	</div>
-</div>
+<header class="bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-3">
+                <a href="/seeker/dashboard">
+                    <img src="/businessman.png" alt="Logo" class="h-8 w-8 rounded-lg" />
+                </a>
+                <h1 class="text-xl font-semibold text-white">{title}</h1>
+            </div>
+            <nav class="flex items-center gap-4">
+                <a href="/seeker/dashboard" class="text-white/80 hover:text-white text-sm font-medium transition-colors">Dashboard</a>
+                <a href={`/seeker/profile/edit/${userId}`} class="text-white/80 hover:text-white text-sm font-medium transition-colors">Edit Profile</a>
+                <form action="/api/auth/signout" class="inline">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                        Sign out
+                    </button>
+                </form>
+            </nav>
+        </div>
+    </div>
+</header>

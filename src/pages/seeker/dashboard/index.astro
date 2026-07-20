@@ -18,13 +18,8 @@ const { data, error } = await supabase.auth.setSession({
 });
 
 if (error) {
-	cookies.delete("sb-access-token", {
-		path: "/",
-	});
-	cookies.delete("sb-refresh-token", {
-		path: "/",
-	});
-
+	cookies.delete("sb-access-token", { path: "/" });
+	cookies.delete("sb-refresh-token", { path: "/" });
 	return redirect("/");
 }
 
@@ -35,11 +30,11 @@ const { data: seeker } = await supabase
 	.single();
 
 const { data: interestedJobs } = await supabase
-	.from("job_interests") // Replace with your actual table name
+	.from("job_interests")
 	.select("job_id")
 	.eq("seeker_id", data?.user?.id);
 
-const interestedJobIds = new Set(interestedJobs.map((job) => job.job_id));
+const interestedJobIds = new Set(interestedJobs?.map((j: { job_id: string }) => j.job_id) ?? []);
 
 const { data: jobListings, error: jobsError } = await supabase
 	.from("job_listings")
@@ -49,233 +44,161 @@ const { data: ownerData } = await supabase.from("owner").select("*");
 ---
 
 <BaseLayout>
-	<div class="flex-grow container mx-auto px-4">
+	<div class="flex-1">
 		<Header title="Job Seeker Dashboard" userId={data?.user?.id} />
-		<div class="mt-4">
-			<div class="mt-8">
-				<table class="w-full mt-4">
-					<tbody>
-						<tr class="border bg-gray-100">
-							<td class="px-4 py-2 border font-semibold">Name:</td>
-							<td class="px-4 py-2 border">{seeker?.name}</td>
-						</tr>
-						<tr class="border bg-gray-100">
-							<td class="px-4 py-2 border font-semibold">GitHub Link:</td>
-							<td class="px-4 py-2 border">
-								{
-									seeker?.github_url ? (
-										<a
-											href={seeker.github_url}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											{seeker.github_url}
-										</a>
-									) : (
-										"N/A"
-									)
-								}
-							</td>
-						</tr>
-						<tr class="border bg-gray-100">
-							<td class="px-4 py-2 border font-semibold">LinkedIn Link:</td>
-							<td class="px-4 py-2 border">
-								{
-									seeker?.linkedin_url ? (
-										<a
-											href={seeker.linkedin_url}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											{seeker.linkedin_url}
-										</a>
-									) : (
-										"N/A"
-									)
-								}
-							</td>
-						</tr>
-						<tr class="border bg-gray-100">
-							<td class="px-4 py-2 border font-semibold">Portfolio Link:</td>
-							<td class="px-4 py-2 border">
-								{
-									seeker?.portfolio_url ? (
-										<a
-											href={seeker.portfolio_url}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											{seeker.portfolio_url}
-										</a>
-									) : (
-										"N/A"
-									)
-								}
-							</td>
-						</tr>
-						<tr class="border bg-gray-100">
-							<td class="px-4 py-2 border font-semibold">Resume Link:</td>
-							<td class="px-4 py-2 border">
-								{
-									seeker?.resume_url ? (
-										<a
-											href={seeker.resume_url}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											{seeker.resume_url}
-										</a>
-									) : (
-										"N/A"
-									)
-								}
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="mt-8">
-				<hr class="my-4 border-t border-gray-300" />
-				{
-					jobsError ? (
-						<p class="text-red-500 mt-4">
-							There was an error fetching your jobs.
-						</p>
-					) : (
-						<div class="mt-4">
-							<h2 class="text-xl font-bold">Job Listings</h2>
-							<div class="mt-2">
-								<input
-									type="text"
-									id="search-bar"
-									placeholder="Search by tags..."
-									class="w-full p-2 border rounded mb-4"
-								/>
-								<table class="w-full mt-4">
-									<thead>
-										<tr>
-											<th class="px-4 py-2 border">Title</th>
-											<th class="px-4 py-2 border">Description</th>
-											<th class="px-4 py-2 border">Tags</th>
-											<th class="px-4 py-2 border">Company</th>
-											<th class="px-4 py-2 border">Job Expires</th>
-											<th class="px-4 py-2 border">Interested?</th>
-										</tr>
-									</thead>
-									<tbody id="job-list">
-										{jobListings.map((job) => {
-											const isInterested = interestedJobIds.has(job.id);
-											const owner = ownerData?.find(
-												(owner) => owner?.user_id === job?.owner_id
-											);
-
-											const date = new Date(job?.time);
-											const options = {
-												year: "numeric",
-												month: "long",
-												day: "numeric",
-												hour: "2-digit",
-												minute: "2-digit",
-												second: "2-digit",
-												timeZone: "Europe/Istanbul",
-												timeZoneName: "short",
-											};
-
-											const formattedDate = new Intl.DateTimeFormat(
-												"tr-TR",
-												options
-											).format(date);
-
-											return (
-												<tr
-													class="border job-row"
-													data-tags={job?.tags.join(", ")}
-												>
-													<td class="px-4 py-2 border">{job?.title}</td>
-													<td class="px-4 py-2 border">{job?.description}</td>
-													<td class="px-4 py-2 border">
-														{job?.tags.join(", ")}
-													</td>
-													<td class="px-4 py-2 border">{owner?.company}</td>
-													<td class="px-4 py-2 border">{formattedDate}</td>
-													<td class="px-4 py-2 border">
-														<input
-															type="checkbox"
-															class="job-checkmark"
-															data-job-id={job?.id}
-															data-seeker-id={data?.user?.id}
-															data-owner-id={job?.owner_id}
-															id={`job-${job?.id}`}
-															checked={isInterested}
-															disabled={isInterested}
-														/>
-													</td>
-												</tr>
-											);
-										})}
-									</tbody>
-								</table>
-							</div>
-						</div>
-					)
-				}
-			</div>
-		</div>
-		<script>
-			document
-				.getElementById("search-bar")
-				.addEventListener("input", function () {
-					const searchValue = this.value.toLowerCase();
-					const jobRows = document.querySelectorAll(".job-row");
-
-					jobRows.forEach((row) => {
-						const tags = row.dataset.tags.toLowerCase();
-						if (tags.includes(searchValue)) {
-							row.style.display = "table-row";
-						} else {
-							row.style.display = "none";
-						}
-					});
-				});
-
-			document.querySelectorAll(".job-checkmark").forEach((checkbox) => {
-				checkbox.addEventListener("change", async function () {
-					if (this.disabled) return; // Skip disabled checkboxes
-
-					const jobId = this.dataset.jobId;
-					const seekerId = this.dataset.seekerId;
-					const ownerId = this.dataset.ownerId;
-
-					if (this.checked) {
-						try {
-							const response = await fetch("/api/job/interested", {
-								method: "POST",
-								headers: {
-									"Content-Type": "application/json",
-								},
-								body: JSON.stringify({
-									job_id: jobId,
-									seeker_id: seekerId,
-									owner_id: ownerId,
-								}),
-							});
-
-							const result = await response.json();
-							if (!response.ok) {
-								console.error("Error adding job interest:", result.message);
-								alert("Failed to add job interest.");
-								this.checked = false; // Reset checkbox if failed
-							} else {
-								this.disabled = true; // Disable checkbox on successful submission
+		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-6 mb-8">
+				<h2 class="text-lg font-semibold text-gray-900 mb-4">My Profile</h2>
+				<dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Name</dt>
+						<dd class="mt-1 text-sm font-medium text-gray-900">{seeker?.name ?? "N/A"}</dd>
+					</div>
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Resume</dt>
+						<dd class="mt-1 text-sm">
+							{seeker?.resume_url
+								? <a href={seeker.resume_url} target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 font-medium">View Resume</a>
+								: <span class="text-gray-400">N/A</span>
 							}
-						} catch (error) {
-							console.error("Error:", error);
-							alert("An error occurred. Please try again later.");
-							this.checked = false; // Reset checkbox if failed
-						}
-					}
-				});
-			});
-		</script>
+						</dd>
+					</div>
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">GitHub</dt>
+						<dd class="mt-1 text-sm">
+							{seeker?.github_url
+								? <a href={seeker.github_url} target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 font-medium">View Profile</a>
+								: <span class="text-gray-400">N/A</span>
+							}
+						</dd>
+					</div>
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">LinkedIn</dt>
+						<dd class="mt-1 text-sm">
+							{seeker?.linkedin_url
+								? <a href={seeker.linkedin_url} target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 font-medium">View Profile</a>
+								: <span class="text-gray-400">N/A</span>
+							}
+						</dd>
+					</div>
+					<div class="bg-gray-50 rounded-lg px-4 py-3">
+						<dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Portfolio</dt>
+						<dd class="mt-1 text-sm">
+							{seeker?.portfolio_url
+								? <a href={seeker.portfolio_url} target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 font-medium">View Portfolio</a>
+								: <span class="text-gray-400">N/A</span>
+							}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			{ jobsError ? (
+				<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+					There was an error fetching job listings.
+				</div>
+			) : (
+				<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200">
+					<div class="px-6 py-5 border-b border-gray-200">
+						<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+							<h2 class="text-lg font-semibold text-gray-900">Job Listings</h2>
+							<input type="text" id="search-bar" placeholder="Search by tags..."
+								class="w-full sm:w-64 rounded-lg border border-gray-300 px-4 py-2 text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" />
+						</div>
+					</div>
+					{ jobListings && jobListings.length > 0 ? (
+						<div class="overflow-x-auto">
+							<table class="w-full">
+								<thead>
+									<tr class="bg-gray-50">
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
+										<th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Posted</th>
+										<th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Interest</th>
+									</tr>
+								</thead>
+								<tbody id="job-list" class="divide-y divide-gray-200">
+									{ jobListings.map((job: { id: string; title: string; description: string; tags: string[]; owner_id: string; time: string; approved: string }) => {
+										const isInterested = interestedJobIds.has(job.id);
+										const owner = ownerData?.find((o: { user_id: string; company?: string }) => o?.user_id === job?.owner_id);
+										const date = new Date(job?.time);
+										const formattedDate = new Intl.DateTimeFormat("tr-TR", {
+											year: "numeric", month: "long", day: "numeric",
+											hour: "2-digit", minute: "2-digit",
+											timeZone: "Europe/Istanbul", timeZoneName: "short",
+										}).format(date);
+										return (
+											<tr class="job-row hover:bg-gray-50 transition-colors" data-tags={job?.tags.join(", ")}>
+												<td class="px-6 py-4 text-sm font-medium text-gray-900">{job?.title}</td>
+												<td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{job?.description}</td>
+												<td class="px-6 py-4 text-sm text-gray-600">
+													<div class="flex flex-wrap gap-1">
+														{ job?.tags.map((tag: string) => (
+															<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700">{tag}</span>
+														))}
+													</div>
+												</td>
+												<td class="px-6 py-4 text-sm text-gray-600">{owner?.company ?? "—"}</td>
+												<td class="px-6 py-4 text-sm text-gray-500">{formattedDate}</td>
+												<td class="px-6 py-4 text-center">
+													<input type="checkbox" class="job-checkmark h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+														data-job-id={job?.id} data-seeker-id={data?.user?.id} data-owner-id={job?.owner_id}
+														id={`job-${job?.id}`} checked={isInterested} disabled={isInterested} />
+												</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<div class="text-center py-12">
+							<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+							<h3 class="mt-4 text-sm font-semibold text-gray-900">No job listings</h3>
+							<p class="mt-1 text-sm text-gray-500">Check back later for new opportunities.</p>
+						</div>
+					)}
+				</div>
+			)}
+		</main>
 	</div>
+	<script>
+		document.getElementById("search-bar")?.addEventListener("input", function () {
+			const searchValue = this.value.toLowerCase();
+			document.querySelectorAll(".job-row").forEach((row) => {
+				const tags = (row.dataset.tags || "").toLowerCase();
+				row.style.display = tags.includes(searchValue) ? "table-row" : "none";
+			});
+		});
+
+		document.querySelectorAll(".job-checkmark").forEach((checkbox) => {
+			checkbox.addEventListener("change", async function () {
+				if (this.disabled) return;
+				const jobId = this.dataset.jobId;
+				const seekerId = this.dataset.seekerId;
+				const ownerId = this.dataset.ownerId;
+				if (this.checked) {
+					try {
+						const response = await fetch("/api/job/interested", {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ job_id: jobId, seeker_id: seekerId, owner_id: ownerId }),
+						});
+						const result = await response.json();
+						if (!response.ok) {
+							console.error("Error adding job interest:", result.message);
+							this.checked = false;
+						} else {
+							this.disabled = true;
+						}
+					} catch (error) {
+						console.error("Error:", error);
+						this.checked = false;
+					}
+				}
+			});
+		});
+	</script>
 </BaseLayout>

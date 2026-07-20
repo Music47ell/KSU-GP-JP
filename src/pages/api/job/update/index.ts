@@ -2,30 +2,33 @@ import type { APIRoute } from "astro";
 import { supabase } from "../../../../lib/supabase";
 
 export const POST: APIRoute = async ({ request, redirect }) => {
-	const formData = await request.formData();
-	const job_id = formData.get("jobId")?.toString();
-	const owner_id = formData.get("ownerId")?.toString();
-	const time = formData.get("time")?.toString();
-	const title = formData.get("title")?.toString();
-	const tags = formData.get("tags")?.toString();
-	const description = formData.get("description")?.toString();
+	try {
+		const formData = await request.formData();
+		const job_id = formData.get("jobId")?.toString();
+		const owner_id = formData.get("ownerId")?.toString();
+		const title = formData.get("title")?.toString();
+		const tags = formData.get("tags")?.toString();
+		const description = formData.get("description")?.toString();
 
-	if (!owner_id) {
-		return new Response("Owner is required", { status: 400 });
+		if (!owner_id) {
+			return new Response(JSON.stringify({ error: "Owner is required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+		}
+
+		const tagsArray = tags?.split(",").map((tag) => tag.trim()) ?? [];
+
+		const { error } = await supabase
+			.from("job_listings")
+			.update({ owner_id, title, tags: tagsArray, description })
+			.eq("id", job_id);
+
+		if (error) {
+			console.error("Job update error:", error.message);
+			return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+		}
+
+		return redirect("/owner/dashboard");
+	} catch (err) {
+		console.error("Job update error:", err);
+		return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: { "Content-Type": "application/json" } });
 	}
-
-	// Convert tags to an array
-	const tagsArray = tags?.split(",").map((tag) => tag.trim()) || null;
-
-	const { error } = await supabase
-		.from("job_listings")
-		.update({ owner_id, time, title, tags: tagsArray, description })
-		.eq("id", job_id)
-		.single();
-
-	if (error) {
-		return new Response(error.message, { status: 500 });
-	}
-
-	return redirect("/owner/dashboard");
 };

@@ -4,101 +4,68 @@ import Header from "../../../components/Header.astro";
 ---
 
 <BaseLayout>
-	<Header />
-	<div class="flex-grow flex justify-center items-center">
-		<div class="max-w-md w-full">
-			<div class="text-center">
-				<img
-					src="/businessman.png"
-					alt="Job Portal Logo"
-					class="w-32 mx-auto mb-8"
-				/>
-				<h1 class="text-2xl mb-4">Register</h1>
-				<p>
-					Already have an account? <a href="/" class="text-blue-500">Sign in</a>
-				</p>
-				<form action="/api/auth/seeker/signup" method="post">
-					<label for="name" class="block text-gray-700 text-sm font-bold mb-2"
-						>Name</label
-					>
-					<input
-						type="text"
-						name="name"
-						id="name"
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-						required
-					/>
-					<label for="email" class="block text-gray-700 text-sm font-bold mb-2"
-						>Email</label
-					>
-					<input
-						type="email"
-						name="email"
-						id="email"
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-						required
-					/>
-					<label
-						for="password"
-						class="block text-gray-700 text-sm font-bold mb-2">Password</label
-					>
-					<input
-						type="password"
-						name="password"
-						id="password"
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-						required
-					/>
-					<label
-						for="resume_url"
-						class="block text-gray-700 text-sm font-bold mb-2">Resume Url</label
-					>
-					<input
-						type="text"
-						name="resume_url"
-						id="resume_url"
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-						required
-					/>
-					<label
-						for="github_url"
-						class="block text-gray-700 text-sm font-bold mb-2">GitHub Url</label
-					>
-					<input
-						type="text"
-						name="github_url"
-						id="github_url"
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-					/>
-					<label
-						for="linkedin_url"
-						class="block text-gray-700 text-sm font-bold mb-2"
-						>LinkedIn Url</label
-					>
-					<input
-						type="text"
-						name="linkedin_url"
-						id="linkedin_url"
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-					/>
-					<label
-						for="portfolio_url"
-						class="block text-gray-700 text-sm font-bold mb-2"
-						>Portfolio Url</label
-					>
-					<input
-						type="text"
-						name="portfolio_url"
-						id="portfolio_url"
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
-					/>
-					<button
-						type="submit"
-						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-						>Sign Up</button
-					>
-				</form>
-			</div>
-		</div>
-	</div>
+    <Header />
+    <main class="flex-1 flex items-center justify-center px-4 py-12">
+        <div class="w-full max-w-lg">
+            <div class="text-center mb-8">
+                <img src="/businessman.png" alt="KSU Job Portal" class="w-16 h-16 mx-auto mb-4" />
+                <h1 class="text-2xl font-bold text-gray-900">Create Seeker Account</h1>
+                <p class="text-gray-500 mt-1">
+                    Already have an account? <a href="/" class="text-primary-600 hover:text-primary-700 font-medium">Sign in</a>
+                </p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-8">
+                <form action="/api/auth/seeker/signup" method="post" class="space-y-5">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input type="text" name="name" id="name" required
+                            class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                            placeholder="Your full name" />
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" name="email" id="email" required
+                            class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                            placeholder="you@example.com" />
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" name="password" id="password" required
+                            class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                            placeholder="Min. 6 characters" />
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="resume_url" class="block text-sm font-medium text-gray-700 mb-1">Resume URL</label>
+                            <input type="url" name="resume_url" id="resume_url" required
+                                class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                                placeholder="https://" />
+                        </div>
+                        <div>
+                            <label for="github_url" class="block text-sm font-medium text-gray-700 mb-1">GitHub URL</label>
+                            <input type="url" name="github_url" id="github_url"
+                                class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                                placeholder="https://github.com/..." />
+                        </div>
+                        <div>
+                            <label for="linkedin_url" class="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
+                            <input type="url" name="linkedin_url" id="linkedin_url"
+                                class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                                placeholder="https://linkedin.com/..." />
+                        </div>
+                        <div>
+                            <label for="portfolio_url" class="block text-sm font-medium text-gray-700 mb-1">Portfolio URL</label>
+                            <input type="url" name="portfolio_url" id="portfolio_url"
+                                class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                                placeholder="https://" />
+                        </div>
+                    </div>
+                    <button type="submit"
+                        class="w-full inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors">
+                        Create Account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
 </BaseLayout>

@@ -2,16 +2,28 @@
 
 ---
 
-<div class="flex justify-end items-center p-4">
-	<span class="mr-2">New User?</span>
-	<a
-		href="/seeker/signup"
-		class="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-		>Seeker</a
-	>
-	<a
-		href="/owner/signup"
-		class="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-		>Owner</a
-	>
-</div>
+<header class="bg-white shadow-sm border-b border-gray-200">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div class="flex justify-between items-center h-16">
+			<a href="/" class="flex items-center gap-2">
+				<img src="/businessman.png" alt="Logo" class="h-8 w-8" />
+				<span class="text-lg font-semibold text-primary-700">KSU Job Portal</span>
+			</a>
+			<div class="flex items-center gap-3">
+				<span class="text-sm text-gray-500 hidden sm:inline">New User?</span>
+				<a
+					href="/seeker/signup"
+					class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-primary-700 bg-primary-50 hover:bg-primary-100 ring-1 ring-primary-200 transition-colors"
+				>
+					Job Seeker
+				</a>
+				<a
+					href="/owner/signup"
+					class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors"
+				>
+					Job Owner
+				</a>
+			</div>
+		</div>
+	</div>
+</header>
