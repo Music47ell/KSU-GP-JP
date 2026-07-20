@@ -6,7 +6,7 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://ksu-gp-jps.ahmetalmaz.com",
+	site: "https://ksu-gp-jp.ahmetalmaz.com",
 	base: "/",
 	trailingSlash: "never",
 	integrations: [tailwind()],
