@@ -167,4 +167,4 @@ ksu-gp-jp/
 
 ## Credits
 
-Developed by [Ahmet ALMAZ](https://www.news47ell.com) — KSU Graduation Project.
+Developed by [Ahmet ALMAZ](https://ahmetalmaz.com) — KSU Graduation Project.
