@@ -2,7 +2,9 @@ name = "ksu-gp-jp"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 main = "./dist/_worker.js/index.js"
-assets = { directory = "./dist", binding = "ASSETS" }
+[assets]
+directory = "./dist"
+binding = "ASSETS"
 
 # Pass env vars at deploy time:
 #   npx wrangler secret put SUPABASE_URL
